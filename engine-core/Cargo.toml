@@ -1,0 +1,10 @@
+[package]
+name = "engine-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true }
+protocol = { path = "../protocol" }
+runtime = { path = "../runtime" }
+crossbeam-channel = "0.5.15"
