@@ -1,2 +1,4 @@
 mod engine;
-use engine::*;
+
+#[cfg(test)]
+mod tests;
