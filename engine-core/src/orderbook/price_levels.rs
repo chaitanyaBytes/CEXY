@@ -2,11 +2,11 @@ use std::collections::VecDeque;
 
 use protocol::{OrderId, Price, Quantity};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct PriceLevel {
-    price: Price,
-    orders: VecDeque<OrderId>,
-    total_quantity: Quantity,
+    pub(crate) price: Price,
+    pub(crate) orders: VecDeque<OrderId>,
+    pub(crate) total_quantity: Quantity,
 }
 
 impl PriceLevel {

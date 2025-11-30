@@ -1,9 +1,13 @@
-use crate::{error::OrderBookError, orderbook::price_levels::PriceLevel};
+use crate::{
+    error::OrderBookError,
+    orderbook::{
+        price_levels::PriceLevel,
+        types::{CACHE_LIMIT, CachedDepth, Depth, MatchResult},
+    },
+};
 use chrono::Utc;
 use protocol::{OrderId, Price, Quantity, Side, UserId};
 use std::collections::{BTreeMap, HashMap};
-
-const CACHE_LIMIT: usize = 25;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrderEntry {
@@ -67,53 +71,7 @@ impl OrderEntry {
     }
 }
 
-#[derive(Debug)]
-pub struct Trade {
-    trade_id: u64,
-    maker_order_id: OrderId,
-    maker_user_id: UserId,
-    taker_order_id: OrderId,
-    taker_user_id: UserId,
-    symbol: String,
-    quantity: Quantity,
-    price: Price,
-    timestamp: i64,
-}
-
-#[derive(Debug)]
-pub struct Fill {
-    order_id: OrderId,
-    user_id: UserId,
-    symbol: String,
-    side: Side,
-    filled_price: Price,
-    filled_quantity: Quantity,
-    remaining_quantity: Quantity,
-}
-
-#[derive(Debug)]
-pub struct Depth {
-    bids: Vec<(Price, Quantity)>,
-    asks: Vec<(Price, Quantity)>,
-}
-
-#[derive(Debug)]
-pub struct CachedDepth {
-    bids: [(Price, Quantity); CACHE_LIMIT],
-    asks: [(Price, Quantity); CACHE_LIMIT],
-    is_latest: bool,
-}
-
-impl CachedDepth {
-    pub fn new() -> Self {
-        Self {
-            bids: [(0, 0); CACHE_LIMIT],
-            asks: [(0, 0); CACHE_LIMIT],
-            is_latest: false,
-        }
-    }
-}
-
+#[derive(Debug, Clone)]
 pub struct OrderBook {
     symbol: String,
     asks: BTreeMap<Price, PriceLevel>,
@@ -126,24 +84,62 @@ pub struct OrderBook {
     // Track best bid/ask for quick access
     best_bid: Option<Price>,
     best_ask: Option<Price>,
+
+    next_trade_id: u64,
 }
 
 impl OrderBook {
     #[inline]
-    pub fn new(symbol: String) -> Self {
+    pub(crate) fn new(symbol: &str) -> Self {
         Self {
-            symbol,
+            symbol: symbol.to_string(),
             asks: BTreeMap::new(),
             bids: BTreeMap::new(),
             orders: HashMap::new(),
             depth_cache: CachedDepth::new(),
             best_bid: None,
             best_ask: None,
+            next_trade_id: 0,
         }
     }
 
     #[inline]
-    pub fn add_order(&mut self, order: OrderEntry) -> Result<(), OrderBookError> {
+    fn generate_trade_id(&mut self) -> u64 {
+        let id = self.next_trade_id;
+        self.next_trade_id += 1;
+        id
+    }
+
+    pub(crate) fn match_market_order(
+        &mut self,
+        order: OrderEntry,
+    ) -> Result<MatchResult, OrderBookError> {
+        order.validate_order()?;
+
+        let order_id = order.order_id;
+        let price = order.price;
+        let side = order.side.clone();
+        let quantity = order.quantity;
+
+        todo!()
+    }
+
+    pub(crate) fn match_limit_order(
+        &mut self,
+        order: OrderEntry,
+    ) -> Result<MatchResult, OrderBookError> {
+        order.validate_order()?;
+
+        let order_id = order.order_id;
+        let price = order.price;
+        let side = order.side.clone();
+        let quantity = order.quantity;
+
+        todo!()
+    }
+
+    #[inline]
+    pub(crate) fn add_order(&mut self, order: OrderEntry) -> Result<(), OrderBookError> {
         order.validate_order()?;
 
         let order_id = order.order_id;
@@ -189,7 +185,7 @@ impl OrderBook {
     }
 
     #[inline]
-    pub fn remove_order(
+    pub(crate) fn remove_order(
         &mut self,
         order_id: OrderId,
     ) -> Result<Option<OrderEntry>, OrderBookError> {
@@ -199,12 +195,12 @@ impl OrderBook {
 
         let price = order.price;
         let side = order.side.clone();
-        let quantity = order.quantity;
+        let remaining_quantity = order.remaining_quantity;
 
         match side {
             Side::Buy => {
                 if let Some(level) = self.bids.get_mut(&price) {
-                    level.remove_order(order_id, quantity);
+                    level.remove_order(order_id, remaining_quantity);
 
                     if level.is_empty() {
                         self.bids.remove(&price);
@@ -217,7 +213,7 @@ impl OrderBook {
             }
             Side::Sell => {
                 if let Some(level) = self.asks.get_mut(&price) {
-                    level.remove_order(order_id, quantity);
+                    level.remove_order(order_id, remaining_quantity);
 
                     if level.is_empty() {
                         self.asks.remove(&price);
@@ -235,7 +231,7 @@ impl OrderBook {
         Ok(Some(order))
     }
 
-    pub fn get_depth(&mut self, limit: usize) -> Depth {
+    pub(crate) fn get_depth(&mut self, limit: usize) -> Depth {
         if !self.depth_cache.is_latest {
             self.update_depth_cache();
         }
@@ -246,7 +242,7 @@ impl OrderBook {
         Depth { bids, asks }
     }
 
-    pub fn update_depth_cache(&mut self) {
+    pub(crate) fn update_depth_cache(&mut self) {
         if self.depth_cache.is_latest {
             return;
         }
@@ -272,27 +268,81 @@ impl OrderBook {
     }
 
     #[inline]
-    pub fn best_bid(&self) -> Option<Price> {
+    pub(crate) fn best_bid(&self) -> Option<Price> {
         self.best_bid
     }
 
     #[inline]
-    pub fn best_ask(&self) -> Option<Price> {
+    pub(crate) fn best_ask(&self) -> Option<Price> {
         self.best_ask
     }
 
     #[inline]
-    pub fn get_order(&self, order_id: OrderId) -> Option<&OrderEntry> {
+    pub(crate) fn get_order(&self, order_id: OrderId) -> Option<&OrderEntry> {
         self.orders.get(&order_id)
     }
 
     #[inline]
-    pub fn get_order_mut(&mut self, order_id: OrderId) -> Option<&mut OrderEntry> {
+    pub(crate) fn get_order_mut(&mut self, order_id: OrderId) -> Option<&mut OrderEntry> {
         self.orders.get_mut(&order_id)
+    }
+
+    #[inline(always)]
+    pub(crate) fn get_symbol(&self) -> &str {
+        &self.symbol
+    }
+
+    #[inline]
+    pub(crate) fn get_next_matchable_order(&self, side: Side) -> Option<OrderId> {
+        match side {
+            Side::Buy => self.best_ask.and_then(|price| {
+                self.asks
+                    .get(&price)
+                    .and_then(|level| level.orders.front().copied())
+            }),
+            Side::Sell => self.best_bid.and_then(|price| {
+                self.bids
+                    .get(&price)
+                    .and_then(|level| level.orders.front().copied())
+            }),
+        }
+    }
+
+    pub(crate) fn update_order_quantity(&mut self, order_id: OrderId, filled_qty: Quantity) {
+        if let Some(order) = self.orders.get_mut(&order_id) {
+            let remaining_before_fill = order.remaining_quantity;
+
+            if let Err(e) = order.fill(filled_qty) {
+                eprintln!("[OrderBook] Failed to fill order: {}", e);
+                return;
+            }
+
+            let price = order.price;
+            match order.side {
+                Side::Buy => {
+                    if let Some(level) = self.bids.get_mut(&price) {
+                        if remaining_before_fill == filled_qty {
+                            level.remove_order(order_id, filled_qty);
+                        } else {
+                            level.total_quantity -= filled_qty;
+                        }
+                    }
+                }
+                Side::Sell => {
+                    if let Some(level) = self.asks.get_mut(&price) {
+                        if remaining_before_fill == filled_qty {
+                            level.remove_order(order_id, filled_qty);
+                        } else {
+                            level.total_quantity -= filled_qty;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
-fn collect_to_fixed_array<I>(iter: I) -> [(Price, Quantity); CACHE_LIMIT]
+pub(crate) fn collect_to_fixed_array<I>(iter: I) -> [(Price, Quantity); CACHE_LIMIT]
 where
     I: Iterator<Item = (Price, Quantity)>,
 {

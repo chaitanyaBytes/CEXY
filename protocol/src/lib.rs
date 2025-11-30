@@ -31,7 +31,7 @@ pub enum Side {
     Sell,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum OrderType {
     Limit,
     Market,
@@ -69,11 +69,13 @@ pub struct OrderReject {
     pub order_id: u64,
     pub user_id: u64,
     pub reason: RejectReason,
+    pub message: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RejectReason {
     InvalidPrice,
+    InvalidOrder,
     InvalidQuantity,
     InsufficientBalance,
     SymbolNotFound,
