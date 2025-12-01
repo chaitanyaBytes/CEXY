@@ -153,26 +153,46 @@ impl Engine {
         return;
     }
 
-    fn handle_cancel_order(&self, cancel_order: CancelOrder, event_tx: &Sender<Event>) {
+    fn handle_cancel_order(&mut self, cancel_order: CancelOrder, event_tx: &Sender<Event>) {
         println!(
             "[Engine] Cancelling order: {} from user {}",
             cancel_order.order_id, cancel_order.user_id
         );
 
+        let cancelled_order = match self.orderbook.remove_order(cancel_order.order_id) {
+            Ok(order) => order,
+            Err(e) => {
+                eprintln!("[Engine] Failed to remove order: {}", e);
+                let reject = Event::OrderReject(OrderReject {
+                    order_id: cancel_order.order_id,
+                    user_id: cancel_order.user_id,
+                    reason: RejectReason::InvalidOrder,
+                    message: e.to_string(),
+                });
+
+                if let Err(e) = event_tx.send(reject) {
+                    eprintln!("[Engine] Failed to send event: {}", e);
+                }
+                return;
+            }
+        };
+
         let cancelled = Event::OrderCancelled(OrderCancelled {
-            order_id: cancel_order.order_id,
-            user_id: cancel_order.user_id,
-            symbol: cancel_order.symbol,
+            order_id: cancelled_order.order_id,
+            user_id: cancelled_order.user_id,
+            symbol: self.orderbook.get_symbol().to_string(),
             reason: CancelReason::UserRequested,
         });
 
         if let Err(e) = event_tx.send(cancelled) {
-            eprint!("[Engine] Failed to send event: {}", e);
+            eprintln!("[Engine] Failed to send event: {}", e);
+        }
+
+        let depth = self.orderbook.get_depth(20);
+        let event = Event::BookUpdate(depth.into_protocol(self.orderbook.get_symbol()));
+        if let Err(e) = event_tx.send(event) {
+            eprintln!("[Engine] Failed to send event: {}", e);
         };
-
-        return;
-
-        // TODO: cancel order in the orderbook later
     }
 }
 

@@ -14,13 +14,13 @@ use std::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrderEntry {
-    order_id: OrderId,
-    user_id: UserId,
-    side: Side,
-    price: Price,
-    quantity: Quantity,
-    remaining_quantity: Quantity,
-    timestamp: i64,
+    pub(crate) order_id: OrderId,
+    pub(crate) user_id: UserId,
+    pub(crate) side: Side,
+    pub(crate) price: Price,
+    pub(crate) quantity: Quantity,
+    pub(crate) remaining_quantity: Quantity,
+    pub(crate) timestamp: i64,
 }
 
 impl OrderEntry {
