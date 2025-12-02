@@ -7,10 +7,7 @@ use crate::{
 };
 use chrono::Utc;
 use protocol::{OrderId, Price, Quantity, Side, UserId};
-use std::{
-    collections::{BTreeMap, HashMap, HashSet},
-    os::unix::raw::pid_t,
-};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrderEntry {
@@ -109,8 +106,6 @@ impl OrderBook {
         &mut self,
         taker_order: &mut OrderEntry,
     ) -> Result<MatchResult, OrderBookError> {
-        taker_order.validate_order()?;
-
         let mut fills = Vec::<Fill>::new();
         let mut trades = Vec::<Trade>::new();
 
@@ -124,18 +119,30 @@ impl OrderBook {
             &mut self.bids
         };
 
+        // Check if there's any liquidity at all
+        if levels.is_empty() {
+            return Err(OrderBookError::InvalidOrder(
+                "No liquidity available for market order".to_string(),
+            ));
+        }
+
+        let initial_remaining = taker_order.remaining_quantity;
         let mut book_changed = false;
 
         while taker_order.remaining_quantity > 0 && !levels.is_empty() {
             let (&price, level) = if is_buy_order {
                 match levels.iter_mut().next() {
                     Some(v) => v,
-                    None => break,
+                    None => {
+                        break;
+                    }
                 }
             } else {
                 match levels.iter_mut().next_back() {
                     Some(v) => v,
-                    None => break,
+                    None => {
+                        break;
+                    }
                 }
             };
 
@@ -212,6 +219,12 @@ impl OrderBook {
             }
         }
 
+        if taker_order.remaining_quantity == initial_remaining {
+            return Err(OrderBookError::InvalidOrder(
+                "Market order could not be filled - insufficient liquidity".to_string(),
+            ));
+        }
+
         if book_changed {
             self.depth_cache.is_latest = false;
         }
@@ -233,8 +246,6 @@ impl OrderBook {
         &mut self,
         taker_order: &mut OrderEntry,
     ) -> Result<MatchResult, OrderBookError> {
-        taker_order.validate_order()?;
-
         let mut fills = Vec::<Fill>::new();
         let mut trades = Vec::<Trade>::new();
 
@@ -384,8 +395,6 @@ impl OrderBook {
 
     #[inline]
     pub(crate) fn add_order(&mut self, order: OrderEntry) -> Result<(), OrderBookError> {
-        order.validate_order()?;
-
         let order_id = order.order_id;
         let price = order.price;
         let side = order.side.clone();
@@ -536,11 +545,12 @@ impl OrderBook {
             let remaining_before_fill = order.remaining_quantity;
 
             if let Err(e) = order.fill(filled_qty) {
-                eprintln!("[OrderBook] Failed to fill order: {}", e);
+                eprintln!("[OrderBook] Failed to fill order {}: {}", order_id, e);
                 return;
             }
 
             let price = order.price;
+
             match order.side {
                 Side::Buy => {
                     if let Some(level) = self.bids.get_mut(&price) {

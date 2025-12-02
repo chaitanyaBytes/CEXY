@@ -150,6 +150,7 @@ impl Engine {
             };
         }
 
+        println!("[Engine] Order processed: {:?}", order.order_id);
         return;
     }
 
