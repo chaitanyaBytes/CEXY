@@ -39,6 +39,7 @@ pub enum OrderResponse {
     Reject {
         order_id: u64,
         reason: RejectReason,
+        symbol: String,
         message: String,
     },
 }

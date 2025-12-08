@@ -89,12 +89,14 @@ impl Engine {
                 user_id: order.user_id,
                 reason: RejectReason::InvalidQuantity,
                 message: "Quantity must be greater than 0".to_string(),
+                symbol: order.symbol.clone(),
             });
 
             if let Err(e) = reply_tx.send(CommandResponse::PlaceOrder(OrderResponse::Reject {
                 order_id: order.order_id,
                 reason: RejectReason::InvalidQuantity,
                 message: "Quantity must be greater than 0".to_string(),
+                symbol: order.symbol.clone(),
             })) {
                 eprintln!("[Engine] Failed to send event: {}", e);
             };
@@ -111,12 +113,14 @@ impl Engine {
                 user_id: order.user_id,
                 reason: RejectReason::InvalidOrder,
                 message: "Price is required for limit orders".to_string(),
+                symbol: order.symbol.clone(),
             });
 
             if let Err(e) = reply_tx.send(CommandResponse::PlaceOrder(OrderResponse::Reject {
                 order_id: order.order_id,
                 reason: RejectReason::InvalidOrder,
                 message: "Price is required for limit orders".to_string(),
+                symbol: order.symbol.clone(),
             })) {
                 eprintln!("[Engine] Failed to send event: {}", e);
             };
@@ -136,7 +140,7 @@ impl Engine {
         if let Err(e) = reply_tx.send(CommandResponse::PlaceOrder(OrderResponse::Ack {
             order_id: order.order_id,
             user_id: order.user_id,
-            symbol: order.symbol,
+            symbol: order.symbol.clone(),
         })) {
             eprintln!("[Engine] Failed to send event: {}", e);
             return;
@@ -168,6 +172,7 @@ impl Engine {
                     user_id: order.user_id,
                     reason: RejectReason::InvalidOrder,
                     message: e.to_string(),
+                    symbol: order.symbol.clone(),
                 });
 
                 if let Err(e) = event_tx.send(reject) {
@@ -218,7 +223,7 @@ impl Engine {
         if let Err(e) = reply_tx.send(CommandResponse::CancelOrder(CancelOrderResponse::Ack {
             order_id: cancel_order.order_id,
             user_id: cancel_order.user_id,
-            symbol: cancel_order.symbol,
+            symbol: cancel_order.symbol.clone(),
         })) {
             eprintln!("[Engine] Failed to send event: {}", e);
             return;
@@ -234,6 +239,7 @@ impl Engine {
                     user_id: cancel_order.user_id,
                     reason: RejectReason::InvalidOrder,
                     message: e.to_string(),
+                    symbol: cancel_order.symbol,
                 });
 
                 if let Err(e) = event_tx.send(reject) {

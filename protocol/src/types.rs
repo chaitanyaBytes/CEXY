@@ -1,3 +1,4 @@
+use enum_stringify::EnumStringify;
 use serde::{Deserialize, Serialize};
 
 pub type OrderId = u64;
@@ -77,9 +78,10 @@ pub struct OrderReject {
     pub user_id: UserId,
     pub reason: RejectReason,
     pub message: String,
+    pub symbol: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumStringify)]
 pub enum RejectReason {
     InvalidPrice,
     InvalidOrder,

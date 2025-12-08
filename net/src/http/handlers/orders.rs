@@ -67,7 +67,6 @@ pub async fn cancel_order(
     req: web::Json<CancelOrderRequest>,
     app_state: web::Data<HttpServerAppState>,
 ) -> impl Responder {
-    let cancel_order_time = Instant::now();
     let body = req.into_inner();
     let cancel_order = CancelOrder::new(body.order_id, body.user_id, body.symbol);
     let (tx, rx) = oneshot::channel::<CommandResponse>();
