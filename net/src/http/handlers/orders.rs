@@ -12,7 +12,7 @@ pub async fn ping() -> impl Responder {
     HttpResponse::Ok().body("pong")
 }
 
-#[post("/place")]
+#[post("/open")]
 pub async fn place_order(
     req: web::Json<OrderRequest>,
     app_state: web::Data<HttpServerAppState>,
