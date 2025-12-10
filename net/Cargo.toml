@@ -16,3 +16,13 @@ futures-util = "0.3"
 actix-web = "4.12.1"
 oneshot = { workspace = true }
 anyhow = "1.0.100"
+strum_macros = "0.27.2"
+strum = "0.27.2"
+enum_stringify = "0.6.4"
+redis = { version = "1.0.0", features = [
+    "json",
+    "tokio-comp",
+    "r2d2",
+    "connection-manager",
+    "aio",
+] }

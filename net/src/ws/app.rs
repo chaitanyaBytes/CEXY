@@ -1,12 +1,12 @@
-use futures_util::{SinkExt, StreamExt};
-use std::net::SocketAddr;
-use tokio::{
-    net::{TcpListener, TcpStream},
-    task::JoinHandle,
-};
-use tokio_tungstenite::{WebSocketStream, accept_async, tungstenite::Message};
+use redis::Client;
+use std::{net::SocketAddr, sync::Arc};
+use tokio::{net::TcpListener, sync::RwLock, task::JoinHandle};
 
-use crate::ws::types::WsClientMessage;
+use crate::ws::broadcasters::{
+    depth::broadcast_depth_events, order_update::broadcast_order_update_events,
+    ticker::broadcast_ticker_events, trade::broadcast_trade_events,
+};
+use crate::ws::{client_manager::UserManager, lib::handle_connection};
 
 pub struct WsServerApp {
     pub port: u16,
@@ -24,11 +24,41 @@ impl WsServerApp {
 
         println!("WebSocket server running on {}", addr);
 
+        let user_manager = Arc::new(RwLock::new(UserManager::new()));
+
+        let redis_url = "redis://127.0.0.1:6379";
+        let redis_client = Client::open(redis_url).expect("[ws] unable to create redis client");
+
+        let trade_user_manager = user_manager.clone();
+        let depth_user_manager = user_manager.clone();
+        let ticker_user_manager = user_manager.clone();
+        let order_update_user_manager = user_manager.clone();
+
+        let redis_trade = redis_client.clone();
+        tokio::spawn(async move { broadcast_trade_events(trade_user_manager, redis_trade).await });
+
+        let redis_depth = redis_client.clone();
+        tokio::spawn(async move { broadcast_depth_events(depth_user_manager, redis_depth).await });
+
+        let redis_ticker = redis_client.clone();
+        tokio::spawn(
+            async move { broadcast_ticker_events(ticker_user_manager, redis_ticker).await },
+        );
+
+        let redis_order = redis_client.clone();
+        tokio::spawn(async move {
+            broadcast_order_update_events(order_update_user_manager, redis_order).await
+        });
+
         let handle = tokio::spawn(async move {
             loop {
                 match listener.accept().await {
                     Ok((stream, user_addr)) => {
-                        tokio::spawn(handle_connection(stream, user_addr));
+                        tokio::spawn(handle_connection(
+                            stream,
+                            user_addr.to_string(),
+                            user_manager.clone(),
+                        ));
                     }
                     Err(e) => {
                         eprintln!("Error accepting connection: {}", e);
@@ -44,56 +74,5 @@ impl WsServerApp {
     pub async fn run_until_stopped(self) -> anyhow::Result<()> {
         self.handle.await?;
         Ok(())
-    }
-}
-
-async fn handle_connection(stream: TcpStream, user_addr: SocketAddr) {
-    let ws_stream = match accept_async(stream).await {
-        Ok(ws) => ws,
-        Err(e) => {
-            eprintln!("[ws] handshake failed from {}: {}", user_addr, e);
-            return;
-        }
-    };
-
-    println!("[ws] connection established from {}", user_addr);
-
-    handle_stream(ws_stream, user_addr).await;
-}
-
-async fn handle_stream(ws_stream: WebSocketStream<TcpStream>, user_addr: SocketAddr) {
-    let (mut write, mut read) = ws_stream.split();
-
-    while let Some(msg) = read.next().await {
-        match msg {
-            Ok(Message::Text(text)) => {
-                println!("[ws] received message: {}", text);
-                let parsed: Result<WsClientMessage, _> = serde_json::from_str(&text);
-                match parsed {
-                    Ok(parsed) => {
-                        println!("[ws] parsed message: {:?}", parsed);
-                    }
-                    Err(e) => {
-                        eprintln!("[ws] error parsing message: {}", e);
-                    }
-                }
-
-                let _ = write.send(Message::Text(text)).await;
-            }
-            Ok(Message::Binary(bin)) => {
-                println!("[ws] received binary message: {}", bin.len());
-            }
-            Ok(Message::Ping(ping)) => {
-                println!("[ws] received ping: {:?}", ping);
-                let _ = write.send(Message::Pong(ping)).await;
-            }
-            Ok(Message::Close(close)) => {
-                println!("[ws] received close: {:?}", close);
-            }
-            Err(e) => {
-                eprintln!("[ws] read error from {}: {}", user_addr, e);
-            }
-            _ => {}
-        }
     }
 }
