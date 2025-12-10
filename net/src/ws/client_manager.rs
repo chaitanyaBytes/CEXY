@@ -71,11 +71,10 @@ impl UserManager {
 
     pub fn disassociate_user(&mut self, user_addr: &str) {
         if let Some(user) = self.users.get_mut(user_addr) {
-            user.user_id = None;
-
-            if let Some(uid) = user.user_id {
+            let old = user.user_id.take();
+            if let Some(uid) = old {
                 self.user_map.remove(&uid);
-                println!("[UserManager] User disassociated: {}", user_addr);
+                println!("[UserManager] User disassociated: {} <- {}", user_addr, uid);
             } else {
                 println!("[UserManager] User not associated: {}", user_addr);
             }
@@ -126,13 +125,18 @@ impl UserManager {
     }
 
     pub async fn broadcast_trade(&mut self, symbol: &str, trade: &str) {
-        for user in self.users.values_mut() {
+        let mut dead = Vec::new();
+        for (addr, user) in self.users.iter_mut() {
             if user.subscribed_trades.contains(symbol) {
                 let message = Message::text(trade);
                 if let Err(e) = user.writer.send(message).await {
-                    eprintln!("Could not send trade, error occured: {}", e);
+                    eprintln!("Could not send trade to {}: {}", addr, e);
+                    dead.push(addr.clone());
                 }
             }
+        }
+        for addr in dead {
+            self.remove_user(&addr);
         }
     }
 }
@@ -163,13 +167,18 @@ impl UserManager {
     }
 
     pub async fn broadcast_ticker(&mut self, symbol: &str, ticker: &str) {
-        for user in self.users.values_mut() {
+        let mut dead = Vec::new();
+        for (addr, user) in self.users.iter_mut() {
             if user.subscribed_tickers.contains(symbol) {
                 let message = Message::text(ticker);
                 if let Err(e) = user.writer.send(message).await {
-                    eprintln!("Could not send ticker, error occured: {}", e);
+                    eprintln!("Could not send ticker to {}: {}", addr, e);
+                    dead.push(addr.clone());
                 }
             }
+        }
+        for addr in dead {
+            self.remove_user(&addr);
         }
     }
 }
@@ -202,13 +211,18 @@ impl UserManager {
     }
 
     pub async fn broadcast_depth(&mut self, symbol: &str, depth: &str) {
-        for user in self.users.values_mut() {
+        let mut dead = Vec::new();
+        for (addr, user) in self.users.iter_mut() {
             if user.subscribed_depth.contains(symbol) {
                 let message = Message::text(depth);
                 if let Err(e) = user.writer.send(message).await {
-                    eprintln!("Could not send depth, error occured: {}", e);
+                    eprintln!("Could not send depth to {}: {}", addr, e);
+                    dead.push(addr.clone());
                 }
             }
+        }
+        for addr in dead {
+            self.remove_user(&addr);
         }
     }
 }

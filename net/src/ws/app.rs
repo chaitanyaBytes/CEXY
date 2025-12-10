@@ -11,6 +11,7 @@ use crate::ws::{client_manager::UserManager, lib::handle_connection};
 pub struct WsServerApp {
     pub port: u16,
     pub handle: JoinHandle<()>,
+    pub broadcaster_handles: Vec<JoinHandle<()>>,
 }
 
 impl WsServerApp {
@@ -34,21 +35,27 @@ impl WsServerApp {
         let ticker_user_manager = user_manager.clone();
         let order_update_user_manager = user_manager.clone();
 
+        let mut broadcaster_handles = Vec::new();
+
         let redis_trade = redis_client.clone();
-        tokio::spawn(async move { broadcast_trade_events(trade_user_manager, redis_trade).await });
+        broadcaster_handles.push(tokio::spawn(async move {
+            let _ = broadcast_trade_events(trade_user_manager, redis_trade).await;
+        }));
 
         let redis_depth = redis_client.clone();
-        tokio::spawn(async move { broadcast_depth_events(depth_user_manager, redis_depth).await });
+        broadcaster_handles.push(tokio::spawn(async move {
+            let _ = broadcast_depth_events(depth_user_manager, redis_depth).await;
+        }));
 
         let redis_ticker = redis_client.clone();
-        tokio::spawn(
-            async move { broadcast_ticker_events(ticker_user_manager, redis_ticker).await },
-        );
+        broadcaster_handles.push(tokio::spawn(async move {
+            let _ = broadcast_ticker_events(ticker_user_manager, redis_ticker).await;
+        }));
 
         let redis_order = redis_client.clone();
-        tokio::spawn(async move {
-            broadcast_order_update_events(order_update_user_manager, redis_order).await
-        });
+        broadcaster_handles.push(tokio::spawn(async move {
+            let _ = broadcast_order_update_events(order_update_user_manager, redis_order).await;
+        }));
 
         let handle = tokio::spawn(async move {
             loop {
@@ -68,11 +75,21 @@ impl WsServerApp {
             }
         });
 
-        Ok(Self { port, handle })
+        Ok(Self {
+            port,
+            handle,
+            broadcaster_handles,
+        })
     }
 
     pub async fn run_until_stopped(self) -> anyhow::Result<()> {
         self.handle.await?;
         Ok(())
+    }
+
+    pub fn abort_broadcasters(&self) {
+        for handle in &self.broadcaster_handles {
+            handle.abort();
+        }
     }
 }

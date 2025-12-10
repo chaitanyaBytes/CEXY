@@ -25,6 +25,7 @@ pub enum Event {
     ORDERUPDATE,
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Deserialize, PartialEq, Eq, Hash, EnumIter, EnumStringify, Clone)]
 pub enum RegisteredSymbols {
     SOL_USDC,

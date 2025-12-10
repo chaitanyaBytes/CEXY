@@ -270,6 +270,6 @@ impl Engine {
 
 impl Default for Engine {
     fn default() -> Self {
-        Self::new("SOL/USD")
+        Self::new("SOL_USDC")
     }
 }
