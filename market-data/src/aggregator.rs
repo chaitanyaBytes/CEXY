@@ -111,8 +111,9 @@ impl Aggregator {
             high: state.high_24h,
             low: state.low_24h,
             volume: state.volume_24h,
-            price_change: state.last_price.unwrap() - state.open_24h.unwrap(),
-            price_change_percent: ((state.last_price.unwrap() - state.open_24h.unwrap()) as f64
+            price_change: state.last_price.unwrap() as i64 - state.open_24h.unwrap() as i64,
+            price_change_percent: ((state.last_price.unwrap() as i64
+                - state.open_24h.unwrap() as i64) as f64
                 / state.open_24h.unwrap() as f64)
                 * 100.0,
             timestamp: Utc::now().timestamp_millis(),

@@ -36,7 +36,7 @@ pub struct TickerEvent {
     pub high: Price,
     pub low: Price,
     pub volume: Quantity,
-    pub price_change: Price,
+    pub price_change: i64,
     pub price_change_percent: f64,
     pub timestamp: i64,
 }

@@ -19,7 +19,7 @@ fn main() {
 
     // Start engine
     let engine_handle = std::thread::spawn(move || {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         engine.run(order_rx, event_tx);
     });
 

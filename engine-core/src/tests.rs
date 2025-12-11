@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn test_place_valid_limit_order() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -52,7 +52,7 @@ mod tests {
         let order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 10,
@@ -78,7 +78,7 @@ mod tests {
             }) => {
                 assert_eq!(order_id, 1);
                 assert_eq!(user_id, 100);
-                assert_eq!(symbol, "SOL/USD");
+                assert_eq!(symbol, "SOL_USDC");
             }
             CommandResponse::PlaceOrder(OrderResponse::Reject { .. }) => {
                 panic!("Expected Ack, got Reject");
@@ -100,7 +100,7 @@ mod tests {
 
     #[test]
     fn test_place_valid_market_order() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, _event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -112,7 +112,7 @@ mod tests {
         let order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Market,
             quantity: 10,
@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn test_reject_zero_quantity() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, _event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -157,7 +157,7 @@ mod tests {
         let order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 0,
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_reject_limit_order_without_price() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, _event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -205,7 +205,7 @@ mod tests {
         let order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 10,
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_reject_limit_order_with_zero_price() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, _event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -253,7 +253,7 @@ mod tests {
         let order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 10,
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn test_buy_limit_matches_sell_limit_full_fill() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -293,7 +293,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -306,7 +306,7 @@ mod tests {
         let buy_order = Order {
             order_id: 2,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -363,7 +363,7 @@ mod tests {
 
     #[test]
     fn test_sell_limit_matches_buy_limit_full_fill() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -376,7 +376,7 @@ mod tests {
         let buy_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -389,7 +389,7 @@ mod tests {
         let sell_order = Order {
             order_id: 2,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_partial_fill_maker_remaining() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -436,7 +436,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 100,
@@ -449,7 +449,7 @@ mod tests {
         let buy_order = Order {
             order_id: 2,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 30,
@@ -498,7 +498,7 @@ mod tests {
 
     #[test]
     fn test_partial_fill_taker_remaining() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -511,7 +511,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 30,
@@ -524,7 +524,7 @@ mod tests {
         let buy_order = Order {
             order_id: 2,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 100,
@@ -561,7 +561,7 @@ mod tests {
 
     #[test]
     fn test_market_order_matches_limit_order() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -574,7 +574,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -587,7 +587,7 @@ mod tests {
         let market_buy = Order {
             order_id: 2,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Market,
             quantity: 30,
@@ -622,7 +622,7 @@ mod tests {
 
     #[test]
     fn test_market_order_no_liquidity() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -635,7 +635,7 @@ mod tests {
         let market_buy = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Market,
             quantity: 30,
@@ -647,7 +647,7 @@ mod tests {
             Ok(Event::OrderAck(ack)) => {
                 assert_eq!(ack.order_id, 1);
                 assert_eq!(ack.user_id, 100);
-                assert_eq!(ack.symbol, "SOL/USD");
+                assert_eq!(ack.symbol, "SOL_USDC");
             }
             other => panic!("Expected OrderAck, got {:?}", other),
         }
@@ -671,7 +671,7 @@ mod tests {
 
     #[test]
     fn test_order_rests_on_book() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -684,7 +684,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -720,7 +720,7 @@ mod tests {
 
     #[test]
     fn test_fifo_priority_same_price() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -734,7 +734,7 @@ mod tests {
             let sell_order = Order {
                 order_id: i,
                 user_id: 100,
-                symbol: "SOL/USD".to_string(),
+                symbol: "SOL_USDC".to_string(),
                 side: Side::Sell,
                 order_type: OrderType::Limit,
                 quantity: 10,
@@ -748,7 +748,7 @@ mod tests {
         let buy_order = Order {
             order_id: 4,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 30,
@@ -791,7 +791,7 @@ mod tests {
 
     #[test]
     fn test_price_priority_best_price_first() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -805,7 +805,7 @@ mod tests {
         let sell1 = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 10,
@@ -818,7 +818,7 @@ mod tests {
         let sell2 = Order {
             order_id: 2,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 10,
@@ -831,7 +831,7 @@ mod tests {
         let buy_order = Order {
             order_id: 3,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 10,
@@ -875,7 +875,7 @@ mod tests {
 
     #[test]
     fn test_cancel_resting_order() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -888,7 +888,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 50,
@@ -901,7 +901,7 @@ mod tests {
         let cancel = CancelOrder {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
         };
         let _ = send_cancel_and_get_response(&order_tx, cancel);
 
@@ -929,7 +929,7 @@ mod tests {
 
     #[test]
     fn test_cancel_non_existent_order() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -942,7 +942,7 @@ mod tests {
         let cancel = CancelOrder {
             order_id: 999,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
         };
         let _ = send_cancel_and_get_response(&order_tx, cancel);
 
@@ -962,7 +962,7 @@ mod tests {
 
     #[test]
     fn test_cancel_partially_filled_order() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -975,7 +975,7 @@ mod tests {
         let sell_order = Order {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Sell,
             order_type: OrderType::Limit,
             quantity: 100,
@@ -988,7 +988,7 @@ mod tests {
         let buy_order = Order {
             order_id: 2,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 30,
@@ -1008,7 +1008,7 @@ mod tests {
         let cancel = CancelOrder {
             order_id: 1,
             user_id: 100,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
         };
         let _ = send_cancel_and_get_response(&order_tx, cancel);
 
@@ -1027,7 +1027,7 @@ mod tests {
 
     #[test]
     fn test_single_order_matches_multiple_orders() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -1041,7 +1041,7 @@ mod tests {
             let sell_order = Order {
                 order_id: i,
                 user_id: 100,
-                symbol: "SOL/USD".to_string(),
+                symbol: "SOL_USDC".to_string(),
                 side: Side::Sell,
                 order_type: OrderType::Limit,
                 quantity: 20,
@@ -1055,7 +1055,7 @@ mod tests {
         let buy_order = Order {
             order_id: 4,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 60, // Matches all 3
@@ -1106,7 +1106,7 @@ mod tests {
 
     #[test]
     fn test_single_order_matches_multiple_levels() {
-        let mut engine = Engine::new("SOL/USD");
+        let mut engine = Engine::new("SOL_USDC");
         let (order_tx, order_rx) =
             crossbeam_channel::unbounded::<(OrderCommand, oneshot::Sender<CommandResponse>)>();
         let (event_tx, event_rx) = crossbeam_channel::unbounded::<Event>();
@@ -1120,7 +1120,7 @@ mod tests {
             let sell_order = Order {
                 order_id: i,
                 user_id: 100,
-                symbol: "SOL/USD".to_string(),
+                symbol: "SOL_USDC".to_string(),
                 side: Side::Sell,
                 order_type: OrderType::Limit,
                 quantity: 20,
@@ -1134,7 +1134,7 @@ mod tests {
         let buy_order = Order {
             order_id: 4,
             user_id: 200,
-            symbol: "SOL/USD".to_string(),
+            symbol: "SOL_USDC".to_string(),
             side: Side::Buy,
             order_type: OrderType::Limit,
             quantity: 80, // Matches all 3

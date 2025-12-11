@@ -5,6 +5,7 @@ members = [
     "gateway",
     "market-data",
     "net",
+    "persistence",
     "protocol",
     "runtime",
 ]
